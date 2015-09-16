@@ -1,0 +1,59 @@
+/*
+ * (C) 2015 Dennis Schulmeister <dennis@patk.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ */
+
+/*
+ * TOOLBAR
+ */
+@media print {
+    #toolbar {
+        display: none;
+    }
+}
+
+#toolbar {
+    background-color: #2566A4;
+    color: white;
+
+    margin: 0;
+    padding: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+#toolbar button {
+    background: none;
+    border: none;
+    outline: 0;
+
+    color: white;
+    font-size: 95%;
+
+    padding: 0.75em 0.25em 0.75em 0.25em;
+}
+
+#toolbar button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+}
+
+#toolbar button:active {
+    padding: 0.8em 0.15em 0.7em 0.35em;
+}
+
+#toolbar button:hover,
+#toolbar button:active,
+#toolbar button:focus,
+#toolbar button::-moz-focus-inner {
+    outline: 0;
+    border: 0;
+}
+
+#toolbar .right {
+    float: right;
+}

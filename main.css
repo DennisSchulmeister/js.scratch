@@ -1,0 +1,38 @@
+/*
+ * (C) 2015 Dennis Schulmeister <dennis@patk.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ */
+
+/*
+ * GENERAL SETTINGS
+ */
+html {
+    font-family: sans;
+    font-size: 12pt;
+}
+
+body {
+    margin: 0;
+
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+@media print {
+    body {
+        display: block;
+    }
+}
+
+/*
+ * Weired height behaviour of css: The height of an element can only be set
+ * if each parent's height has been set.
+ */
+html,
+body {
+    height: 100%;
+}

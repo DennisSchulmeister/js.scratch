@@ -1,0 +1,273 @@
+{
+	"IcoMoonType": "selection",
+	"icons": [
+		{
+			"icon": {
+				"paths": [
+					"M917.806 229.076c-22.212-30.292-53.174-65.7-87.178-99.704s-69.412-64.964-99.704-87.178c-51.574-37.82-76.592-42.194-90.924-42.194h-496c-44.112 0-80 35.888-80 80v864c0 44.112 35.888 80 80 80h736c44.112 0 80-35.888 80-80v-624c0-14.332-4.372-39.35-42.194-90.924zM785.374 174.626c30.7 30.7 54.8 58.398 72.58 81.374h-153.954v-153.946c22.984 17.78 50.678 41.878 81.374 72.572zM896 944c0 8.672-7.328 16-16 16h-736c-8.672 0-16-7.328-16-16v-864c0-8.672 7.328-16 16-16 0 0 495.956-0.002 496 0v224c0 17.672 14.326 32 32 32h224v624z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"file-empty",
+					"file",
+					"document",
+					"paper",
+					"page",
+					"new",
+					"empty",
+					"blank"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"order": 1,
+				"id": 1598,
+				"prevSize": 32,
+				"ligatures": "file-empty, file3",
+				"name": "file-empty",
+				"code": 58880
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 0
+		},
+		{
+			"icon": {
+				"paths": [
+					"M832 960l192-512h-832l-192 512zM128 384l-128 576v-832h288l128 128h416v128z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"folder-open",
+					"directory",
+					"category",
+					"browse"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 227,
+				"order": 3,
+				"prevSize": 32,
+				"ligatures": "folder-open, directory2",
+				"name": "folder-open",
+				"code": 58881
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 1
+		},
+		{
+			"icon": {
+				"paths": [
+					"M1088 128h-1024c-35.2 0-64 28.8-64 64v640c0 35.2 28.8 64 64 64h1024c35.2 0 64-28.8 64-64v-640c0-35.2-28.8-64-64-64zM640 256h128v128h-128v-128zM832 448v128h-128v-128h128zM448 256h128v128h-128v-128zM640 448v128h-128v-128h128zM256 256h128v128h-128v-128zM448 448v128h-128v-128h128zM128 256h64v128h-64v-128zM128 448h128v128h-128v-128zM192 768h-64v-128h64v128zM768 768h-512v-128h512v128zM1024 768h-192v-128h192v128zM1024 576h-128v-128h128v128zM1024 384h-192v-128h192v128z"
+				],
+				"width": 1152,
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"keyboard",
+					"typing",
+					"type"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 351,
+				"order": 8,
+				"prevSize": 32,
+				"ligatures": "keyboard, typing",
+				"name": "keyboard",
+				"code": 58882
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 2
+		},
+		{
+			"icon": {
+				"paths": [
+					"M896 0h-896v1024h1024v-896l-128-128zM512 128h128v256h-128v-256zM896 896h-768v-768h64v320h576v-320h74.978l53.022 53.018v714.982z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"floppy-disk",
+					"save"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 376,
+				"order": 2,
+				"prevSize": 32,
+				"ligatures": "floppy-disk, save2",
+				"name": "floppy-disk",
+				"code": 58883
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 3
+		},
+		{
+			"icon": {
+				"paths": [
+					"M128 320v640c0 35.2 28.8 64 64 64h576c35.2 0 64-28.8 64-64v-640h-704zM320 896h-64v-448h64v448zM448 896h-64v-448h64v448zM576 896h-64v-448h64v448zM704 896h-64v-448h64v448z",
+					"M848 128h-208v-80c0-26.4-21.6-48-48-48h-224c-26.4 0-48 21.6-48 48v80h-208c-26.4 0-48 21.6-48 48v80h832v-80c0-26.4-21.6-48-48-48zM576 128h-192v-63.198h192v63.198z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"bin",
+					"trashcan",
+					"remove",
+					"delete",
+					"recycle",
+					"dispose"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 684,
+				"order": 9,
+				"prevSize": 32,
+				"ligatures": "bin, trashcan",
+				"name": "bin",
+				"code": 58884
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 4
+		},
+		{
+			"icon": {
+				"paths": [
+					"M512 0c-282.77 0-512 229.23-512 512s229.23 512 512 512 512-229.23 512-512-229.23-512-512-512zM512 960.002c-62.958 0-122.872-13.012-177.23-36.452l233.148-262.29c5.206-5.858 8.082-13.422 8.082-21.26v-96c0-17.674-14.326-32-32-32-112.99 0-232.204-117.462-233.374-118.626-6-6.002-14.14-9.374-22.626-9.374h-128c-17.672 0-32 14.328-32 32v192c0 12.122 6.848 23.202 17.69 28.622l110.31 55.156v187.886c-116.052-80.956-192-215.432-192-367.664 0-68.714 15.49-133.806 43.138-192h116.862c8.488 0 16.626-3.372 22.628-9.372l128-128c6-6.002 9.372-14.14 9.372-22.628v-77.412c40.562-12.074 83.518-18.588 128-18.588 70.406 0 137.004 16.26 196.282 45.2-4.144 3.502-8.176 7.164-12.046 11.036-36.266 36.264-56.236 84.478-56.236 135.764s19.97 99.5 56.236 135.764c36.434 36.432 85.218 56.264 135.634 56.26 3.166 0 6.342-0.080 9.518-0.236 13.814 51.802 38.752 186.656-8.404 372.334-0.444 1.744-0.696 3.488-0.842 5.224-81.324 83.080-194.7 134.656-320.142 134.656z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"earth",
+					"globe",
+					"language",
+					"web",
+					"internet",
+					"sphere",
+					"planet"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"order": 4,
+				"id": 1423,
+				"prevSize": 32,
+				"ligatures": "earth, globe2",
+				"name": "earth",
+				"code": 58885
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 5
+		},
+		{
+			"icon": {
+				"paths": [
+					"M0 64v896h1024v-896h-1024zM960 896h-896v-768h896v768zM896 192h-768v640h768v-640zM448 512h-64v64h-64v64h-64v-64h64v-64h64v-64h-64v-64h-64v-64h64v64h64v64h64v64zM704 640h-192v-64h192v64z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"terminal",
+					"console",
+					"cmd",
+					"command-line"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 1273,
+				"order": 10,
+				"prevSize": 32,
+				"ligatures": "terminal, console",
+				"name": "terminal",
+				"code": 58886
+			},
+			"setIdx": 0,
+			"setId": 2,
+			"iconIdx": 6
+		},
+		{
+			"icon": {
+				"paths": [
+					"M256 64h512v128h-512v-128z",
+					"M960 256h-896c-35.2 0-64 28.8-64 64v320c0 35.2 28.794 64 64 64h192v256h512v-256h192c35.2 0 64-28.8 64-64v-320c0-35.2-28.8-64-64-64zM128 448c-35.346 0-64-28.654-64-64s28.654-64 64-64 64 28.654 64 64-28.652 64-64 64zM704 896h-384v-320h384v320z"
+				],
+				"attrs": [],
+				"tags": [
+					"printer",
+					"print"
+				],
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 345,
+				"order": 11,
+				"prevSize": 32,
+				"ligatures": "printer, print",
+				"name": "printer",
+				"code": 58887
+			},
+			"setIdx": 1,
+			"setId": 0,
+			"iconIdx": 84
+		}
+	],
+	"height": 1024,
+	"metadata": {
+		"name": "icomoon"
+	},
+	"preferences": {
+		"showGlyphs": true,
+		"showQuickUse": true,
+		"showQuickUse2": true,
+		"showSVGs": true,
+		"fontPref": {
+			"prefix": "icon-",
+			"metadata": {
+				"fontFamily": "icomoon",
+				"majorVersion": 1,
+				"minorVersion": 0
+			},
+			"metrics": {
+				"emSize": 1024,
+				"baseline": 6.25,
+				"whitespace": 50
+			},
+			"embed": false,
+			"resetPoint": 58880,
+			"showSelector": false,
+			"showMetrics": false,
+			"showMetadata": false,
+			"showVersion": false
+		},
+		"imagePref": {
+			"prefix": "icon-",
+			"png": true,
+			"useClassSelector": true,
+			"color": 4473924,
+			"bgColor": 16777215
+		},
+		"historySize": 100,
+		"showCodes": false
+	}
+}

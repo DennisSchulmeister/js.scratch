@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JS.Scratch</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!--
+          (C) 2015 Dennis Schulmeister <dennis@patk.org>
+
+           This program is free software: you can redistribute it and/or modify
+           it under the terms of the GNU Affero General Public License as
+           published by the Free Software Foundation, either version 3 of the
+           License, or (at your option) any later version.
+        -->
+
+        <link rel="shortcut icon" href="icon.ico">
+        <link rel="apple-touch-icon" href="icon.png">
+
+        <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+        <script src="codemirror/lib/codemirror.js"></script>
+        <script src="codemirror/mode/javascript/javascript.js"></script>
+
+        <link rel="stylesheet" href="icomoon/style.css">
+        <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet" href="toolbar.css">
+        <link rel="stylesheet" href="editor.css">
+
+        <script src="i18n.js"></script>
+        <script src="locale/de.js"></script>
+
+        <script src="main.js"></script>
+    </head>
+    <body>
+        <menu id="toolbar">
+            <button title="Create new file and discard current source code" onclick="cmd.new_source()">
+                <span class="icon-file-empty" aria-hidden="true"></span>
+                <label data-i18n="">New</label>
+            </button>
+
+            <button title="Open an existing file from disk" onclick="cmd.open_source()">
+                <span class="icon-folder-open" aria-hidden="true"></span>
+                <label data-i18n="">Open</label>
+            </button>
+
+            <button title="Save source code to disk" onclick="cmd.save_source()">
+                <span class="icon-floppy-disk" aria-hidden="true"></span>
+                <label data-i18n="">Save</label>
+            </button>
+
+            <button title="Print source code" onclick="window.print()">
+                <span class="icon-printer" aria-hidden="true"></span>
+                <label data-i18n="">Print</label>
+            </button>
+
+            <button class="right" title="Visit JS.Scratch website" onclick="cmd.visit_website()">
+                <span class="icon-earth" aria-hidden="true"></span>
+                <label>JS.Scratch</label>
+            </button>
+        </menu>
+
+        <textarea id="editor" name="editor"></textarea>
+    </body>
+</html>
