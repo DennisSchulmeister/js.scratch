@@ -30,14 +30,7 @@ cmd = {
         if (!editor.ask_unsaved_changes(question)) return;
 
         editor.init();
-        interpreter.init();
-
-        //////////////////////////77
-        interpreter.addEventListener("ready", function() {
-            alert("ready");
-            interpreter.eval("7 * 7");
-        });
-
+        interpreter.init(function() {});
     },
 
     /**
@@ -107,6 +100,14 @@ editor = {
     change_generation: -1,
 
     /**
+     * The widget which is shown below the last line in order to run the code.
+     */
+    execute_widget: {
+        dom: undefined,
+        cm: undefined,
+    },
+
+    /**
      * Initialize editor with a new source code
      */
     init: function() {
@@ -114,7 +115,7 @@ editor = {
         this.filename = "";
         this.unsaved_changes = false;
 
-        // Create editor widget
+        // Create editor instance
         var textarea = document.getElementById("editor");
         textarea.value = "";
 
@@ -144,10 +145,23 @@ editor = {
         });
 
         this.mark_clean();
-        //var exec_button = document.createElement("button");
-        //exec_button.innerHTML = "Ausführen";
-        //var source_doc = source_editor.getDoc();
-        //source_doc.addLineWidget(0, exec_button.cloneNode(true)); // Geht nicht
+
+        // Create widget to run the source code
+        this.execute_widget.line = -1;
+
+        if (this.execute_widget.dom == undefined) {
+            this.execute_widget.dom = document.createElement("div");
+            this.execute_widget.dom.classList.add("toolbar");
+            this.execute_widget.dom.classList.add("inline");
+
+            this.execute_widget.dom.innerHTML = "<button title='" + _("Execute code and show result") + "' onclick='editor.execute()'>"
+                                              + "  <span class='icon-terminal' aria-hidden='true'></span>"
+                                              + "  <label data-i18n=''>" + _("Execute") + "</label>"
+                                              + "</button>";
+        }
+
+        this.update_execute_widget();
+        this.cm_editor.on("change", this.update_execute_widget.bind(this));
     },
 
     /**
@@ -214,6 +228,34 @@ editor = {
         // TODO: Special handling for read-only blocks
         return "data:text/javascript;charset=utf-8," + encodeURIComponent(this.cm_editor.getValue());
     },
+
+    /**
+     * keypress event handler which makes sure that below the very last line
+     * a widget will be visible to run the source code.
+     */
+    update_execute_widget: function() {
+        if (this.execute_widget.cm != undefined) {
+            this.execute_widget.cm.clear();
+        }
+
+        var last_line = this.cm_editor.lastLine();
+        var doc = this.cm_editor.getDoc();
+
+        this.execute_widget.cm = doc.addLineWidget(last_line, this.execute_widget.dom);
+    },
+
+    /**
+     * Execute editable source code and show the results below. After that
+     * make the source code read-only so that it can neither be changed nor
+     * re-executed.
+     */
+    execute: function() {
+        // Find source code to be executed
+        // Execute and receive result
+        // Insert result widget
+        // Append an empty line --> how??
+        this.update_execute_widget();
+    },
 };
 
 /**
@@ -228,8 +270,12 @@ interpreter = {
 
     /**
      * Re-initialize the sandbox
+     *
+     * Parameters:
+     *   callback: Function which is called once the <iframe> jail has finished
+     *     loading and the sandbox is ready. (optional)
      */
-    init: function() {
+    init: function(callback) {
         if (this.iframe != undefined) {
             this.iframe.parentElement.removeChild(this.iframe);
         }
@@ -239,44 +285,40 @@ interpreter = {
         this.iframe.style.display = "none";
         document.querySelector("body").appendChild(this.iframe);
 
-        this.iframe.contentWindow.send_result = this.on_send_result.bind(this);
-
-        ///////////////// TUT NICHT
         this.iframe.addEventListener("load", (function() {
-            this.script = this.iframe.contentDocument.getElementsByTagName("script")[0];
-
-            var ready_event = new CustomEvent("iframe-ready", {
-                details: {},
-                bubbles: true,
-                cancelable: true,
-            });
-
-            this.iframe.dispatchEvent(ready_event);
+            this.script = this.iframe.contentDocument.querySelector("script");
+            if (callback != undefined) callback();
         }).bind(this));
     },
 
     /**
      * Evaluates the given JavaScript code inside the sandbox.
      *
+     * Parameters:
+     *   code: The code to be executed
+     *   callback: A callback function with a single argument. This function
+     *     is called in order to return the evaluated result. (optional)
+     *
      * Returns:
-     *   The evaluated result just as built-in eval() would
+     *   Nothing since the given JavaScript code is evaluated asynchroniously
+     *   inside an <iframe> jail. Since there is no sensible way to block in
+     *   JavaScript the evaluated result is returen via a callback function.
      */
-    eval: function(code) {
+    eval: function(code, callback) {
+        if (callback != undefined) {
+            this.iframe.contentWindow._callback = callback;
+        } else {
+            this.iframe.contentWindow._callback = function(result) {};
+        }
+
         var code1 = "try {"
-                  + "    send_result("
+                  + "    _callback("
                   + '        eval("' + code.replace(/\"/g, "\\\"") + '")'
                   + "    );"
                   + "} catch (error) {"
-                  + "    send_result(error);"
+                  + "    _callback(error);"
                   + "}";
-        this.script.innerHTML = code1;
-    },
 
-    /**
-     * Callback called by the sandboxed JavaScript code in order to return
-     * the evaluated result back.
-     */
-    on_send_result: function(result) {
-        alert(result); ///
+        this.script.innerHTML = code1;
     },
 };

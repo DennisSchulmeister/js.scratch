@@ -17,3 +17,31 @@
     /* Needed for webkit */
     height: 100%;
 }
+
+.toolbar.inline button {
+    background: none;
+    border: none;
+    outline: 0;
+
+    font-size: 95%;
+}
+
+@media print {
+    .toolbar.inline {
+        display: none;
+    }
+}
+
+.toolbar.inline button:hover {
+    color: #555555;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.toolbar.inline button:hover,
+.toolbar.inline button:active,
+.toolbar.inline button:focus,
+.toolbar.inline button::-moz-focus-inner {
+    outline: 0;
+    border: 0;
+}

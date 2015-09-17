@@ -32,4 +32,8 @@ i18n.language["de"] = {
     "Are you sure you want to go on?": "Wollen Sie sicher fortfahren?",
     "Are you sure you want to create a new file?": "Wollen Sie sicher eine neue Datei anlegen?",
     "Are you sure you want to open another file?": "Wollen Sie sicher eine andere Datei öffnen?",
-};
+
+    // Editor content
+    "Execute": "Ausführen",
+    "Execute code and show result": "Quellcode ausführen und Ergebnis anzeigen",
+}
