@@ -89,6 +89,11 @@ editor = {
     filename: "",
 
     /**
+     * <textarea> behind the code editor
+     */
+    textarea: undefined,
+
+    /**
      * CodeMirror editor object which contains the source code
      */
     cm_editor: undefined,
@@ -119,8 +124,9 @@ editor = {
      * array contains objects with the following properties:
      *
      *   line: Line number
-     *   dom: The DOM element
-     *   cm: cm_editor's proxy object
+     *   type: "result" or "output"
+     *   dom: DOM element inside the code area
+     *   cm: cm_editor's proxy object for dom_code
      */
     result_widgets: [],
 
@@ -133,8 +139,8 @@ editor = {
         this.unsaved_changes = false;
 
         // Create editor instance
-        var textarea = document.getElementById("editor");
-        textarea.value = "";
+        this.textarea = document.getElementById("editor");
+        this.textarea.value = "";
 
         var default_source = _("Welcome to JS.Scratch") + "\n";
         default_source += Array(default_source.length).join("=") + "\n"
@@ -146,7 +152,7 @@ editor = {
                        + _("Have fun!");
 
         default_source.split("\n").forEach(function (line) {
-            textarea.value += "// " + line + "\n";
+            this.textarea.value += "// " + line + "\n";
         }, this);
 
         if (this.cm_editor != undefined) {
@@ -154,13 +160,14 @@ editor = {
             element.parentElement.removeChild(element);
         }
 
-        this.cm_editor = CodeMirror.fromTextArea(textarea, {
+        this.cm_editor = CodeMirror.fromTextArea(this.textarea, {
             mode: "javascript",
             indentUnit: 4,
             lineNumbers: true,
             showCursorWhenSelecting: true,
         });
 
+        this.focus();
         this.mark_clean();
 
         // Workaround for read-only lines, since this.cm_editor.markText
@@ -187,6 +194,14 @@ editor = {
 
         this.update_execute_widget();
         this.cm_editor.on("change", this.update_execute_widget.bind(this));
+    },
+
+    /**
+     * Focus editor and place cursor at the end
+     */
+    focus: function() {
+        this.cm_editor.execCommand("goDocEnd");
+        this.cm_editor.focus();
     },
 
     /**
@@ -277,19 +292,23 @@ editor = {
      *
      * Parameters:
      *   line: Line number below which the result will be shown
+     *   type: "result" for computed results or "output" for console output
      *   html: innerHTML of the result widget
      *
      * Returns:
      *   The widget object added to this.resultWidgets
      */
-    insert_result: function(line, html) {
-        var result_element = document.createElement("div");
-        result_element.classList.add("result");
-        result_element.innerHTML = html;
+    insert_result: function(line, type, html) {
+        if (type != "result" && type != "output") type = "result";
+
+        var code_element = document.createElement("div");
+        code_element.classList.add(type);
+        code_element.innerHTML = html;
 
         var result_widget = {
             line: line,
-            dom: result_element,
+            type: type,
+            dom: code_element,
         };
 
         this.result_widgets.push(result_widget);
@@ -327,24 +346,62 @@ editor = {
         var to = {line: last_line + 1, ch: 0};
         var source_code = this.cm_editor.getRange(from, to);
 
-        interpreter.eval(source_code, (function(result) {
+        var result_cb = (function(result) {
             // Insert result
-            result = result.toString();
+            if (result == undefined) {
+                result = "";
+            } else {
+                result = result.toString();
+            }
+
             result = result.replace("<", "&lt;");
             result = result.replace(">", "&gt;");
             result = result.replace("/", "&#47;");
 
-            this.insert_result(last_line, "<pre>" + result + "</pre>");
+            this.insert_result(last_line, "result", "<pre>" + result + "</pre>");
 
             // Append an empty line
-            // TODO: Only works the first time ???
-            this.cm_editor.setValue(this.cm_editor.getValue() + "\n");
-            this.cm_editor.setCursor(last_line);
+            // Note: All variants with setValue() or getting the source
+            // code from the <textare>, updating the <textarea> instead, ...
+            // work only the first time they are called!?!? This is the
+            // only relaible solution. Fortunately only a new line needs
+            // to be added.
+            this.cm_editor.execCommand("goDocEnd");
+            this.cm_editor.execCommand("newlineAndIndent");
+            this.cm_editor.save();
+            this.focus();
 
             this.execute_first_line = last_line + 1;
             this.update_result_widgets();
             this.update_execute_widget();
-        }).bind(this));
+        }).bind(this);
+
+        var output_cb = (function() {
+            console.log.apply(console, arguments);
+            var output = "";
+
+            for (var i = 0; i < arguments.length; i++) {
+                var argument = arguments[i];
+                var to_string = "";
+
+                if (argument == undefined) {
+                    to_string = "undefined";
+                } else {
+                    to_string = argument.toString();
+                }
+
+                to_string = to_string.replace("<", "&lt;");
+                to_string = to_string.replace(">", "&gt;");
+                to_string = to_string.replace("/", "&#47;");
+
+                if (output == "") output = to_string;
+                else output += " " + to_string;
+            }
+
+            this.insert_result(last_line, "output", "<pre>" + output + "</pre>");
+        }).bind(this);
+
+        interpreter.eval(source_code, result_cb, output_cb);
     },
 };
 
@@ -375,10 +432,11 @@ interpreter = {
         this.iframe.style.display = "none";
         document.querySelector("body").appendChild(this.iframe);
 
-        this.iframe.addEventListener("load", (function() {
-            this.script = this.iframe.contentDocument.querySelector("script");
-            if (callback != undefined) callback();
-        }).bind(this));
+        if (callback != undefined) {
+            this.iframe.addEventListener("load", (function() {
+                callback();
+            }).bind(this));
+        }
     },
 
     /**
@@ -386,33 +444,42 @@ interpreter = {
      *
      * Parameters:
      *   code: The code to be executed
-     *   callback: A callback function with a single argument. This function
+     *   result_cb: A callback function with a single argument. This function
      *     is called in order to return the evaluated result. (optional)
+     *   output_cb: Replacement function for console.log(...) (optional)
      *
      * Returns:
      *   Nothing since the given JavaScript code is evaluated asynchroniously
      *   inside an <iframe> jail. Since there is no sensible way to block in
      *   JavaScript the evaluated result is returen via a callback function.
      */
-    eval: function(code, callback) {
-        if (callback != undefined) {
-            this.iframe.contentWindow._callback = callback;
+    eval: function(code, result_cb, output_cb) {
+        if (result_cb != undefined) {
+            this.iframe.contentWindow._result_cb = result_cb;
         } else {
-            this.iframe.contentWindow._callback = function(result) {};
+            this.iframe.contentWindow._result_cb = function(result) {};
+        }
+
+        if (output_cb != undefined) {
+            if ((this.iframe.contentWindow.console != undefined)
+                && (this.iframe.contentWindow.console.log != undefined)) {
+                    this.iframe.contentWindow.console.log = output_cb;
+                }
         }
 
         code = code.replace(/\"/g, "\\\"");
         code = code.replace(/\n/g, "\\n");
 
         var code1 = "try {"
-                  + "    _callback("
+                  + "    _result_cb("
                   + '        eval("' + code + '")'
                   + "    );"
                   + "} catch (error) {"
-                  + "    _callback(error);"
+                  + "    _result_cb(error);"
                   + "}";
 
-        console.log(code1);
-        this.script.innerHTML = code1;
+        var script = this.iframe.contentDocument.createElement("script");
+        script.innerHTML = code1;
+        this.iframe.contentDocument.querySelector("head").appendChild(script);
     },
 };

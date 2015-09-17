@@ -55,3 +55,7 @@
 .result {
     font-weight: bold;
 }
+
+.output {
+    color: darkblue;
+}
