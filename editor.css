@@ -45,3 +45,13 @@
     outline: 0;
     border: 0;
 }
+
+.toolbar,
+.readonly,
+.result {
+    background-color: #f7f7f7;
+}
+
+.result {
+    font-weight: bold;
+}

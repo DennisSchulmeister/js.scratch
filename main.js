@@ -100,12 +100,29 @@ editor = {
     change_generation: -1,
 
     /**
+     * First line of the source code to be executed. Once the code has run,
+     * the code section will be marked read-only and this variable will be
+     * changed to the last line of the document.
+     */
+    execute_first_line: 0,
+
+    /**
      * The widget which is shown below the last line in order to run the code.
      */
     execute_widget: {
         dom: undefined,
         cm: undefined,
     },
+
+    /**
+     * The widgets which contain the result of any executed source code. The
+     * array contains objects with the following properties:
+     *
+     *   line: Line number
+     *   dom: The DOM element
+     *   cm: cm_editor's proxy object
+     */
+    result_widgets: [],
 
     /**
      * Initialize editor with a new source code
@@ -145,6 +162,14 @@ editor = {
         });
 
         this.mark_clean();
+
+        // Workaround for read-only lines, since this.cm_editor.markText
+        // doesn't work
+        this.cm_editor.on("beforeChange", (function(cm_editor, change) {
+            if (change.from.line < this.execute_first_line) {
+                change.cancel();
+            }
+        }).bind(this));
 
         // Create widget to run the source code
         this.execute_widget.line = -1;
@@ -239,9 +264,54 @@ editor = {
         }
 
         var last_line = this.cm_editor.lastLine();
-        var doc = this.cm_editor.getDoc();
+        this.execute_widget.cm = this.cm_editor.addLineWidget(
+            last_line,
+            this.execute_widget.dom
+        );
+    },
 
-        this.execute_widget.cm = doc.addLineWidget(last_line, this.execute_widget.dom);
+    /**
+     * Inserts a new result widget into the editor. Afterwards the method
+     * update_result_widgets must be called in order for the widget to become
+     * visible.
+     *
+     * Parameters:
+     *   line: Line number below which the result will be shown
+     *   html: innerHTML of the result widget
+     *
+     * Returns:
+     *   The widget object added to this.resultWidgets
+     */
+    insert_result: function(line, html) {
+        var result_element = document.createElement("div");
+        result_element.classList.add("result");
+        result_element.innerHTML = html;
+
+        var result_widget = {
+            line: line,
+            dom: result_element,
+        };
+
+        this.result_widgets.push(result_widget);
+        return result_widget;
+    },
+
+    /**
+     * Reinserts the results into the editor after a change to the source code.
+     */
+    update_result_widgets: function() {
+        var from_line = 0;
+
+        this.result_widgets.forEach(function(widget) {
+            // Insert results
+            if (widget.cm != undefined) widget.cm.clear();
+            widget.cm = this.cm_editor.addLineWidget(widget.line, widget.dom);
+
+            // Highlight read-only lines
+            for (var l = from_line; l <= widget.line; l++) {
+                this.cm_editor.addLineClass(l, "background", "readonly");
+            }
+        }.bind(this));
     },
 
     /**
@@ -251,10 +321,30 @@ editor = {
      */
     execute: function() {
         // Find source code to be executed
-        // Execute and receive result
-        // Insert result widget
-        // Append an empty line --> how??
-        this.update_execute_widget();
+        var last_line = this.cm_editor.lastLine();
+
+        var from = {line: this.execute_first_line, ch: 0};
+        var to = {line: last_line + 1, ch: 0};
+        var source_code = this.cm_editor.getRange(from, to);
+
+        interpreter.eval(source_code, (function(result) {
+            // Insert result
+            result = result.toString();
+            result = result.replace("<", "&lt;");
+            result = result.replace(">", "&gt;");
+            result = result.replace("/", "&#47;");
+
+            this.insert_result(last_line, "<pre>" + result + "</pre>");
+
+            // Append an empty line
+            // TODO: Only works the first time ???
+            this.cm_editor.setValue(this.cm_editor.getValue() + "\n");
+            this.cm_editor.setCursor(last_line);
+
+            this.execute_first_line = last_line + 1;
+            this.update_result_widgets();
+            this.update_execute_widget();
+        }).bind(this));
     },
 };
 
@@ -311,6 +401,9 @@ interpreter = {
             this.iframe.contentWindow._callback = function(result) {};
         }
 
+        // TODO: Clean comments and remove lineb reaks
+        // TODO: Catch syntax errors?
+
         var code1 = "try {"
                   + "    _callback("
                   + '        eval("' + code.replace(/\"/g, "\\\"") + '")'
@@ -319,6 +412,7 @@ interpreter = {
                   + "    _callback(error);"
                   + "}";
 
+        console.log(code1);
         this.script.innerHTML = code1;
     },
 };
