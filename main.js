@@ -46,7 +46,6 @@ cmd = {
         file_element.accept = "text/javascript";
 
         file_element.addEventListener("change", function() {
-            editor.init(false);
             editor.open_file(this.files[0]);
         });
 
@@ -269,17 +268,6 @@ editor = {
     },
 
     /**
-     * Discards the source code and opens the given file instead.
-     *
-     * Parameters:
-     *   file: A File object as returned by <input type="file">
-     */
-    open_file: function(file) {
-        // TODO: Execute file and populate editor
-        this.cm_editor.markClean();
-    },
-
-    /**
      * Returns:
      *   A data uri which can be used to save the source code. The uri must
      *   be opened by the browser in any way. The best way is to use a
@@ -287,10 +275,12 @@ editor = {
      */
     get_data_uri: function() {
         var content = "";
+        var last_line = this.cm_editor.lastLine();
 
         for (var line = 0; line < this.cm_editor.lineCount(); line++) {
             // The source line itself
-            content += this.cm_editor.getLine(line) + "\n";
+            content += this.cm_editor.getLine(line);
+            if (line != last_line) content += "\n";
 
             // Add results if existing
             var result_widget = undefined;
@@ -304,15 +294,82 @@ editor = {
             if (result_widget != undefined) {
                 content += "/*** [" + result_widget.type.toUpperCase() + "]\n";
 
-                result_widget.result.split("\n").forEach(function(line) {
-                    content += " *** " + line + "\n";
-                });
+                if (result_widget.result.trim() != "") {
+                    result_widget.result.split("\n").forEach(function(line) {
+                        content += " *** " + line + "\n";
+                    });
+                }
 
                 content += " ***/\n";
             }
         }
-
         return "data:text/javascript;charset=utf-8," + encodeURIComponent(content);
+    },
+
+    /**
+     * Discards the source code and opens the given file instead.
+     *
+     * Parameters:
+     *   file: A File object as returned by <input type="file">
+     */
+    open_file: function(file) {
+        this.init(false);
+        this.filename = file.name;
+
+        var reader = new FileReader();
+
+        reader.onload = (function() {
+            // Read file content and execute each code block when a
+            // non-code section is found.
+            var lines = reader.result.split("\n");
+
+            var source_code = "";
+            var next_block = "";
+            var skip_result = false;
+            var editor_line_number = -1;
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i];
+                if (i < lines.length - 1) line += "\n";
+
+                if (line.startsWith("/*** [")) {
+                    // Found beginning of non-code section
+                    // Skip all from now on
+                    skip_result = true;
+                } else if (skip_result && line.startsWith(" ***/")) {
+                    // Found end of non-code section
+                    // Execute code above and add result to editor
+                    this.do_execute(next_block, editor_line_number, false);
+
+                    source_code += next_block;
+                    next_block = "";
+                    skip_result = false;
+
+                    line = line.slice(5);
+                    if (line.trim() == "") {
+                        line = "";
+                    }
+                }
+
+                if (!skip_result && line != "") {
+                    // Remember line to be added and to be executed as soon as
+                    // a non-code section follows
+                    editor_line_number += 1;
+                    next_block += line;
+                }
+            }
+
+            // Update editor widget
+            this.cm_editor.setValue(source_code);
+
+            this.execute_first_line = this.cm_editor.lastLine();
+            this.update_result_widgets();
+            this.update_execute_widget();
+
+            this.mark_clean();
+        }).bind(this);
+
+        reader.readAsText(file);
     },
 
     /**
@@ -385,21 +442,37 @@ editor = {
      * Execute editable source code and show the results below. After that
      * make the source code read-only so that it can neither be changed nor
      * re-executed.
-     *
-     * Parameters:
-     *   newline: Insert a new line afterwards (default). This is really
-     *     the wanted behavious because otherwise the user could not enter
-     *     more lines. However when an existing file is opened this function
-     *     is called within a loop where the auto newline is unwanted.
      */
-    execute: function(newline) {
-        // Find source code to be executed
+    execute: function() {
+        // Find editable code and execute
         var last_line = this.cm_editor.lastLine();
 
         var from = {line: this.execute_first_line, ch: 0};
         var to = {line: last_line + 1, ch: 0};
         var source_code = this.cm_editor.getRange(from, to);
 
+        this.do_execute(source_code, last_line, true);
+
+        // Update editor widget
+        this.execute_first_line = last_line + 1;
+        this.update_result_widgets();
+        this.update_execute_widget();
+    },
+
+    /**
+     * Actual implementation of executing code and adding the result to the
+     * editor content. This is split from execute() because it is also needed
+     * when a file is opened.
+     *
+     * Parameters:
+     *   source_code: The source code to be executed
+     *   line: Line number where to append the result
+     *   newline: Insert a new line afterwards (default). This is really
+     *     the wanted behavious because otherwise the user could not enter
+     *     more lines. However when an existing file is opened this function
+     *     is called within a loop where the auto newline is unwanted.
+     */
+    do_execute: function(source_code, line, newline) {
         var result_cb = (function(result) {
             // Insert result
             if (result == undefined) {
@@ -408,24 +481,18 @@ editor = {
                 result = escape_html(pp.to_string(result));
             }
 
-            this.insert_result(last_line, "result", result);
+            this.insert_result(line, "result", result);
 
             // Append an empty line
-            // Note: All variants with setValue() or getting the source
-            // code from the <textare>, updating the <textarea> instead, ...
-            // work only the first time they are called!?!? This is the
-            // only relaible solution. Fortunately only a new line needs
-            // to be added.
+            // Note: I'll never understand why this is the only solution
+            // that works here. Elsewhere setValue(getValue()) works fine.
+            // Never mind ...
             if (newline == undefined || newline == true) {
                 this.cm_editor.execCommand("goDocEnd");
                 this.cm_editor.execCommand("newlineAndIndent");
                 this.cm_editor.save();
                 this.focus();
             }
-
-            this.execute_first_line = last_line + 1;
-            this.update_result_widgets();
-            this.update_execute_widget();
         }).bind(this);
 
         var output_cb = (function() {
@@ -440,7 +507,7 @@ editor = {
                 else output += " " + to_string;
             }
 
-            this.insert_result(last_line, "output", output);
+            this.insert_result(line, "output", output);
         }).bind(this);
 
         interpreter.eval(source_code, result_cb, output_cb);
