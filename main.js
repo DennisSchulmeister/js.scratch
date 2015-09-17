@@ -46,6 +46,7 @@ cmd = {
         file_element.accept = "text/javascript";
 
         file_element.addEventListener("change", function() {
+            editor.init(false);
             editor.open_file(this.files[0]);
         });
 
@@ -134,6 +135,7 @@ editor = {
      *
      *   line: Line number
      *   type: "result" or "output"
+     *   result: Raw text content
      *   dom: DOM element inside the code area
      *   cm: cm_editor's proxy object for dom_code
      */
@@ -141,8 +143,13 @@ editor = {
 
     /**
      * Initialize editor with a new source code
+     *
+     * Parameters:
+     *   with_default_source: Insert default source with a welcome message
+     *      into the editor (default). This is the wanted default behaviour
+     *      except when an existing file is opened.
      */
-    init: function() {
+    init: function(with_default_source) {
         // Reset attributes
         this.filename = "";
         this.unsaved_changes = false;
@@ -154,18 +161,20 @@ editor = {
         this.textarea = document.getElementById("editor");
         this.textarea.value = "";
 
-        var default_source = _("Welcome to JS.Scratch") + "\n";
-        default_source += Array(default_source.length).join("=") + "\n"
-                       + "\n"
-                       + _("This is an interactive JavaScript editor.") + "\n"
-                       + _("It helps you to easily experiment with JavaScript.") + "\n"
-                       + _("Write some code and click \"execute\" to see the result.") + "\n"
-                       + "\n"
-                       + _("Have fun!");
+        if (with_default_source == undefined || with_default_source == true) {
+            var default_source = _("Welcome to JS.Scratch") + "\n";
+            default_source += Array(default_source.length).join("=") + "\n"
+                           + "\n"
+                           + _("This is an interactive JavaScript editor.") + "\n"
+                           + _("It helps you to easily experiment with JavaScript.") + "\n"
+                           + _("Write some code and click \"execute\" to see the result.") + "\n"
+                           + "\n"
+                           + _("Have fun!");
 
-        default_source.split("\n").forEach(function (line) {
-            this.textarea.value += "// " + line + "\n";
-        }, this);
+            default_source.split("\n").forEach(function (line) {
+                this.textarea.value += "// " + line + "\n";
+            }, this);
+        }
 
         if (this.cm_editor != undefined) {
             var element = this.cm_editor.getWrapperElement();
@@ -277,8 +286,33 @@ editor = {
      *   dynamicly created <a href="data_uri" download="filename"/> element.
      */
     get_data_uri: function() {
-        // TODO: Special handling for read-only blocks
-        return "data:text/javascript;charset=utf-8," + encodeURIComponent(this.cm_editor.getValue());
+        var content = "";
+
+        for (var line = 0; line < this.cm_editor.lineCount(); line++) {
+            // The source line itself
+            content += this.cm_editor.getLine(line) + "\n";
+
+            // Add results if existing
+            var result_widget = undefined;
+
+            for (var i = 0; i < this.result_widgets.length; i++) {
+                result_widget = this.result_widgets[i];
+                if (result_widget.line == line) break;
+                else result_widget = undefined;
+            }
+
+            if (result_widget != undefined) {
+                content += "/*** [" + result_widget.type.toUpperCase() + "]\n";
+
+                result_widget.result.split("\n").forEach(function(line) {
+                    content += " *** " + line + "\n";
+                });
+
+                content += " ***/\n";
+            }
+        }
+
+        return "data:text/javascript;charset=utf-8," + encodeURIComponent(content);
     },
 
     /**
@@ -305,22 +339,23 @@ editor = {
      * Parameters:
      *   line: Line number below which the result will be shown
      *   type: "eval" for computed results or "output" for console output
-     *   html: innerHTML of the result widget
+     *   result: innerHTML of the result widget
      *
      * Returns:
      *   The widget object added to this.resultWidgets
      */
-    insert_result: function(line, type, html) {
-        if (type != "eval" && type != "output") type = "eval";
+    insert_result: function(line, type, result) {
+        if (type != "result" && type != "output") type = "result";
 
         var code_element = document.createElement("div");
-        code_element.classList.add("result");
+        code_element.classList.add("non_code");
         code_element.classList.add(type);
-        code_element.innerHTML = html;
+        code_element.innerHTML = "<pre>" + result + "</pre>";
 
         var result_widget = {
             line: line,
             type: type,
+            result: result,
             dom: code_element,
         };
 
@@ -350,8 +385,14 @@ editor = {
      * Execute editable source code and show the results below. After that
      * make the source code read-only so that it can neither be changed nor
      * re-executed.
+     *
+     * Parameters:
+     *   newline: Insert a new line afterwards (default). This is really
+     *     the wanted behavious because otherwise the user could not enter
+     *     more lines. However when an existing file is opened this function
+     *     is called within a loop where the auto newline is unwanted.
      */
-    execute: function() {
+    execute: function(newline) {
         // Find source code to be executed
         var last_line = this.cm_editor.lastLine();
 
@@ -367,7 +408,7 @@ editor = {
                 result = escape_html(pp.to_string(result));
             }
 
-            this.insert_result(last_line, "eval", "<pre>" + result + "</pre>");
+            this.insert_result(last_line, "result", result);
 
             // Append an empty line
             // Note: All variants with setValue() or getting the source
@@ -375,10 +416,12 @@ editor = {
             // work only the first time they are called!?!? This is the
             // only relaible solution. Fortunately only a new line needs
             // to be added.
-            this.cm_editor.execCommand("goDocEnd");
-            this.cm_editor.execCommand("newlineAndIndent");
-            this.cm_editor.save();
-            this.focus();
+            if (newline == undefined || newline == true) {
+                this.cm_editor.execCommand("goDocEnd");
+                this.cm_editor.execCommand("newlineAndIndent");
+                this.cm_editor.save();
+                this.focus();
+            }
 
             this.execute_first_line = last_line + 1;
             this.update_result_widgets();
@@ -397,7 +440,7 @@ editor = {
                 else output += " " + to_string;
             }
 
-            this.insert_result(last_line, "output", "<pre>" + output + "</pre>");
+            this.insert_result(last_line, "output", output);
         }).bind(this);
 
         interpreter.eval(source_code, result_cb, output_cb);
