@@ -401,12 +401,12 @@ interpreter = {
             this.iframe.contentWindow._callback = function(result) {};
         }
 
-        // TODO: Clean comments and remove lineb reaks
-        // TODO: Catch syntax errors?
+        code = code.replace(/\"/g, "\\\"");
+        code = code.replace(/\n/g, "\\n");
 
         var code1 = "try {"
                   + "    _callback("
-                  + '        eval("' + code.replace(/\"/g, "\\\"") + '")'
+                  + '        eval("' + code + '")'
                   + "    );"
                   + "} catch (error) {"
                   + "    _callback(error);"
