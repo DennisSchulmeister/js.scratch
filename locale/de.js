@@ -36,4 +36,6 @@ i18n.language["de"] = {
     // Editor content
     "Execute": "Ausführen",
     "Execute code and show result": "Quellcode ausführen und Ergebnis anzeigen",
+
+    "Please enter a file name:": "Bitte geben Sie einen Dateinamen ein:",
 }

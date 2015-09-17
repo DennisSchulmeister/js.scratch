@@ -16,6 +16,7 @@ window.addEventListener("load", function() {
     i18n.init();
     editor.init();
     interpreter.init();
+    pp.init();
 });
 
 /**
@@ -46,7 +47,6 @@ cmd = {
 
         file_element.addEventListener("change", function() {
             editor.open_file(this.files[0]);
-            // TODO: Execute file
         });
 
         file_element.click();
@@ -56,12 +56,21 @@ cmd = {
      * Save source code to local file
      */
     save_source: function() {
-        var filename = editor.filename;
-        if (filename == "") filename = "javascript.js";
+        if (editor.filename == "") {
+            editor.filename = prompt(_("Please enter a file name:"), "javascript.js");
+
+            if (editor.filename == null) {
+                editor.filename = "";
+            } else {
+                editor.filename = editor.filename.trim();
+            }
+
+            if (editor.filename == "") return;
+        }
 
         var a_element = document.createElement("a");
         a_element.setAttribute("href", editor.get_data_uri());
-        a_element.setAttribute("download", filename);
+        a_element.setAttribute("download", editor.filename);
 
         var event = document.createEvent("MouseEvents");
         event.initEvent("click", true, true);
@@ -137,6 +146,9 @@ editor = {
         // Reset attributes
         this.filename = "";
         this.unsaved_changes = false;
+        this.change_generation = -1;
+        this.execute_first_line = 0;
+        this.result_widgets = [];
 
         // Create editor instance
         this.textarea = document.getElementById("editor");
@@ -254,7 +266,7 @@ editor = {
      *   file: A File object as returned by <input type="file">
      */
     open_file: function(file) {
-        // TODO
+        // TODO: Execute file and populate editor
         this.cm_editor.markClean();
     },
 
@@ -292,16 +304,17 @@ editor = {
      *
      * Parameters:
      *   line: Line number below which the result will be shown
-     *   type: "result" for computed results or "output" for console output
+     *   type: "eval" for computed results or "output" for console output
      *   html: innerHTML of the result widget
      *
      * Returns:
      *   The widget object added to this.resultWidgets
      */
     insert_result: function(line, type, html) {
-        if (type != "result" && type != "output") type = "result";
+        if (type != "eval" && type != "output") type = "eval";
 
         var code_element = document.createElement("div");
+        code_element.classList.add("result");
         code_element.classList.add(type);
         code_element.innerHTML = html;
 
@@ -351,14 +364,10 @@ editor = {
             if (result == undefined) {
                 result = "";
             } else {
-                result = result.toString();
+                result = escape_html(pp.to_string(result));
             }
 
-            result = result.replace("<", "&lt;");
-            result = result.replace(">", "&gt;");
-            result = result.replace("/", "&#47;");
-
-            this.insert_result(last_line, "result", "<pre>" + result + "</pre>");
+            this.insert_result(last_line, "eval", "<pre>" + result + "</pre>");
 
             // Append an empty line
             // Note: All variants with setValue() or getting the source
@@ -382,17 +391,7 @@ editor = {
 
             for (var i = 0; i < arguments.length; i++) {
                 var argument = arguments[i];
-                var to_string = "";
-
-                if (argument == undefined) {
-                    to_string = "undefined";
-                } else {
-                    to_string = argument.toString();
-                }
-
-                to_string = to_string.replace("<", "&lt;");
-                to_string = to_string.replace(">", "&gt;");
-                to_string = to_string.replace("/", "&#47;");
+                var to_string = escape_html(pp.to_string(argument, true));
 
                 if (output == "") output = to_string;
                 else output += " " + to_string;
@@ -483,3 +482,201 @@ interpreter = {
         this.iframe.contentDocument.querySelector("head").appendChild(script);
     },
 };
+
+/**
+ * Pretty printer to serialize values to strings.
+ */
+pp = {
+    /**
+     * A WeakMap to store all known object ids
+     */
+    object_ids: undefined,
+
+    /**
+     * Counter to generate the obejct ids
+     */
+    id_counter: 0,
+
+    /**
+     * Initialize pretty printer. This is needed in order to choose an
+     * implementation for generating object ids.
+     */
+    init: function() {
+        if (window.WeakMap == undefined) {
+            // Fallback implementartion: Extend Object prototype
+            // See: http://stackoverflow.com/a/2020890
+            this.get_object_id = this.get_object_id_fallback;
+
+            Object.prototype._id = function() {
+                pp.id_counter += 1;
+
+                var id = pp.id_counter;
+                this._id = function() { return id; }
+                return id;
+            };
+        } else {
+            // Default implementation: Uses a WeakMap
+            this.object_ids = new WeakMap();
+        }
+    },
+
+    /**
+     * Serialize object into a nice string representation.
+     *
+     * Parameters:
+     *   obj: The object or value to serialize
+     *   short: True if strings should be returned as is
+     * Returns:
+     *   A human-readable string
+     */
+    to_string: function(obj, short) {
+        var seen_objects = [];
+        var indent = 0;
+
+        function _get_indent(amount) {
+            var chars = "";
+
+            if (amount > 0) {
+                for (var i = 0; i < amount; i++) chars += " ";
+            }
+
+            return chars;
+        }
+
+        function _is_error(obj) {
+            var root = Object.getPrototypeOf(Object);
+            var proto = obj;
+
+            while (proto != root && proto != null) {
+                if (String(proto) == "Error") return true;
+                proto = Object.getPrototypeOf(proto);
+            }
+
+            return false;
+        }
+
+        function _to_string(obj, short) {
+            indent += 4;
+            var string = "";
+
+            if (obj == null) {
+                string = "null";
+            } else if (Array.isArray(obj)) {
+                string = "array";
+            } else if (_is_error(obj)) {
+                string = "error";
+            } else {
+                string = typeof(obj);
+            }
+
+            switch (string) {
+                case "undefined":
+                    break;
+                case "null":
+                    break;
+                case "string":
+                    if (short == true) string = obj;
+                    else string += ' "' + obj + '"';
+                    break;
+                case "array":
+                    var id = this.get_object_id(obj);
+
+                    if (seen_objects.indexOf(id) >= 0) {
+                        string += ":" + id + " [ … ]";
+                    } else {
+                        seen_objects.push(id);
+                        string += ":" + id + " [\n";
+
+                        for (var i = 0; i < obj.length; i++) {
+                            string += _get_indent(indent) + i + ": " + _to_string(obj[i], short) + ",\n";
+                        }
+
+                        string += _get_indent(indent - 4) + "]";
+                        seen_objects.pop();
+                    }
+
+                    break;
+                case "object":
+                    var id = this.get_object_id(obj);
+
+                    if (seen_objects.indexOf(id) >= 0) {
+                        string += ":" + id + " { … }";
+                    } else {
+                        seen_objects.push(id);
+                        string += ":" + id + " {\n"
+
+                        var keys = Object.keys(obj).sort();
+
+                        for (var i = 0; i < keys.length; i++) {
+                            var key = keys[i];
+                            string += _get_indent(indent) + key + ": " + _to_string(obj[key], short) + ",\n";
+                        }
+
+                        string += _get_indent(indent - 4) + "}";
+                        seen_objects.pop();
+                    }
+
+                    break;
+                case "function":
+                case "error":
+                    string = String(obj);
+                    break;
+                default:
+                    string += " " + String(obj);
+            }
+
+            indent -= 4;
+            return string;
+        }
+
+        _to_string = _to_string.bind(this);
+        return _to_string(obj, short);
+    },
+
+    /**
+     * Create a unique id for the given object. This is the default
+     * implementation which uses a WeakMap to store the obejct ids.
+     */
+    get_object_id: function(obj) {
+        if (obj == null) return 0;
+        if (typeof(obj) != "object") return -1;
+
+        if (this.object_ids.has(obj)) {
+            return this.object_ids.get(obj);
+        } else {
+            this.id_counter += 1;
+            this.object_ids.set(obj, this.id_counter);
+            return this.id_counter;
+        }
+    },
+
+    /**
+     * Create a unique id for the given object. This is the fallback
+     * implementation which extends the Object prototype to store the
+     * obejct ids.
+     */
+    get_object_id_fallback: function(obj) {
+        if (obj == null) return 0;
+        if (typeof(obj) != "object") return -1;
+        if (obj._id == undefined) return -1;
+
+        else return obj._id();
+    },
+}
+
+/**
+ * Utility function to escape html special characters.
+ *
+ * Parameters:
+ *   text: Origninal text with html tags, e.g. "<h1>test</h1>".
+ * Returns:
+ *   Escaped string, e.g. "&lt;h1&gt;test&lt&&#47;h1&gt;".
+ */
+function escape_html(text) {
+    text = text.replace("&", "&amp;");
+    text = text.replace("<", "&lt;");
+    text = text.replace(">", "&gt;");
+    text = text.replace("/", "&#47;");
+
+    return text;
+}
