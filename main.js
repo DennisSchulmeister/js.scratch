@@ -30,8 +30,9 @@ cmd = {
         var question = _("Are you sure you want to create a new file?");
         if (!editor.ask_unsaved_changes(question)) return;
 
+        interpreter.init();
+        pp.init();
         editor.init();
-        interpreter.init(function() {});
     },
 
     /**
@@ -46,7 +47,12 @@ cmd = {
         file_element.accept = "text/javascript";
 
         file_element.addEventListener("change", function() {
-            editor.open_file(this.files[0]);
+            pp.init();
+            var file = this.files[0];
+
+            interpreter.init(function() {
+                editor.open_file(file);
+            });
         });
 
         file_element.click();
@@ -360,6 +366,7 @@ editor = {
             }
 
             // Update editor widget
+            source_code += next_block;
             this.cm_editor.setValue(source_code);
 
             this.execute_first_line = this.cm_editor.lastLine();
@@ -612,6 +619,8 @@ pp = {
      * implementation for generating object ids.
      */
     init: function() {
+        this.id_counter = 0;
+
         if (window.WeakMap == undefined) {
             // Fallback implementartion: Extend Object prototype
             // See: http://stackoverflow.com/a/2020890
