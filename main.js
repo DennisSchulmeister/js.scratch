@@ -151,7 +151,7 @@ editor = {
      *
      * Parameters:
      *   with_default_source: Insert default source with a welcome message
-     *      into the editor (default). This is the wanted default behaviour
+     *      into the editor (default). This is the wanted default behavior
      *      except when an existing file is opened.
      */
     init: function(with_default_source) {
@@ -253,7 +253,7 @@ editor = {
      * which would be needed for a "do you want to save [yes] [no] [cancel]"
      * type of question. Therefor the user may only choose to goon or cancel
      * in order to not to depend on another JS library and to keep the source
-     * code simpel.
+     * code simple.
      *
      * Parameters:
      *   question: A question like "Are you sure you want to create a new file?"
@@ -277,7 +277,7 @@ editor = {
      * Returns:
      *   A data uri which can be used to save the source code. The uri must
      *   be opened by the browser in any way. The best way is to use a
-     *   dynamicly created <a href="data_uri" download="filename"/> element.
+     *   dynamically created <a href="data_uri" download="filename"/> element.
      */
     get_data_uri: function() {
         var content = "";
@@ -477,7 +477,7 @@ editor = {
      *   source_code: The source code to be executed
      *   line: Line number where to append the result
      *   newline: Insert a new line afterwards (default). This is really
-     *     the wanted behavious because otherwise the user could not enter
+     *     the wanted behavior because otherwise the user could not enter
      *     more lines. However when an existing file is opened this function
      *     is called within a loop where the auto newline is unwanted.
      */
@@ -567,9 +567,9 @@ interpreter = {
      *   output_cb: Replacement function for console.log(...) (optional)
      *
      * Returns:
-     *   Nothing since the given JavaScript code is evaluated asynchroniously
+     *   Nothing since the given JavaScript code is evaluated asynchronously
      *   inside an <iframe> jail. Since there is no sensible way to block in
-     *   JavaScript the evaluated result is returen via a callback function.
+     *   JavaScript the evaluated result is returned via a callback function.
      */
     eval: function(code, result_cb, output_cb) {
         if (result_cb != undefined) {
@@ -612,7 +612,7 @@ pp = {
     object_ids: undefined,
 
     /**
-     * Counter to generate the obejct ids
+     * Counter to generate the object ids
      */
     id_counter: 0,
 
@@ -624,7 +624,7 @@ pp = {
         this.id_counter = 0;
 
         if (window.WeakMap == undefined) {
-            // Fallback implementartion: Extend Object prototype
+            // Fallback implementation: Extend Object prototype
             // See: http://stackoverflow.com/a/2020890
             this.get_object_id = this.get_object_id_fallback;
 
@@ -709,7 +709,8 @@ pp = {
                         string += ":" + id + " [\n";
 
                         for (var i = 0; i < obj.length; i++) {
-                            string += _get_indent(indent) + i + ": " + _to_string(obj[i], short) + ",\n";
+                            var value_string = _to_string(obj[i], short);
+                            string += _get_indent(indent) + i + ": " + value_string + ",\n";
                         }
 
                         string += _get_indent(indent - 4) + "]";
@@ -730,7 +731,8 @@ pp = {
 
                         for (var i = 0; i < keys.length; i++) {
                             var key = keys[i];
-                            string += _get_indent(indent) + key + ": " + _to_string(obj[key], short) + ",\n";
+                            var value_string = _to_string(obj[key], short);
+                            string += _get_indent(indent) + key + ": " + value_string + ",\n";
                         }
 
                         string += _get_indent(indent - 4) + "}";
@@ -740,10 +742,12 @@ pp = {
                     break;
                 case "function":
                 case "error":
-                    string = String(obj);
+                    // Note: function contains indention because the source code
+                    // is automatically copied nearly verbatim from the editor widget.
+                    string = obj.toString();
                     break;
                 default:
-                    string += " " + String(obj);
+                    string += " " + obj.toString();
             }
 
             indent -= 4;
@@ -756,7 +760,7 @@ pp = {
 
     /**
      * Create a unique id for the given object. This is the default
-     * implementation which uses a WeakMap to store the obejct ids.
+     * implementation which uses a WeakMap to store the object ids.
      */
     get_object_id: function(obj) {
         if (obj == null) return 0;
@@ -789,7 +793,7 @@ pp = {
  * Utility function to escape html special characters.
  *
  * Parameters:
- *   text: Origninal text with html tags, e.g. "<h1>test</h1>".
+ *   text: Original text with html tags, e.g. "<h1>test</h1>".
  * Returns:
  *   Escaped string, e.g. "&lt;h1&gt;test&lt&&#47;h1&gt;".
  */
