@@ -589,12 +589,12 @@ interpreter = {
         code = code.replace(/\n/g, "\\n");
 
         var code1 = "try {"
-                  + "    _result_cb("
-                  + '        eval("' + code + '")'
-                  + "    );"
+                  + '    __result = eval("' + code + '")'
                   + "} catch (error) {"
-                  + "    _result_cb(error);"
-                  + "}";
+                  + "    __result = error;"
+                  + "}"
+                  + ""
+                  + "_result_cb(__result)";
 
         var script = this.iframe.contentDocument.createElement("script");
         script.innerHTML = code1;
