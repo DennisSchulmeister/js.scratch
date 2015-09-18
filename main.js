@@ -333,6 +333,7 @@ editor = {
             var next_block = "";
             var skip_result = false;
             var editor_line_number = -1;
+            var execute_first_line = 0;
 
             for (var i = 0; i < lines.length; i++) {
                 var line = lines[i];
@@ -346,6 +347,7 @@ editor = {
                     // Found end of non-code section
                     // Execute code above and add result to editor
                     this.do_execute(next_block, editor_line_number, false);
+                    execute_first_line = editor_line_number + 1;
 
                     source_code += next_block;
                     next_block = "";
@@ -369,7 +371,7 @@ editor = {
             source_code += next_block;
             this.cm_editor.setValue(source_code);
 
-            this.execute_first_line = this.cm_editor.lastLine();
+            this.execute_first_line = execute_first_line;
             this.update_result_widgets();
             this.update_execute_widget();
 
