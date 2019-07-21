@@ -33,5 +33,5 @@ License, or (at your option) any later version.
 Resources
 ---------
 
-Website: http://www.wpvs.de/repo/js.scratch/
+Website: http://www.wpvs.de/js/
 Source code: https://github.com/DennisSchulmeister/js.scratch
