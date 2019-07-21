@@ -33,5 +33,5 @@ License, or (at your option) any later version.
 Resources
 ---------
 
-Website: http://www.pingu-mobil.de/js/
-Source code: https://www.wikiberd.de/hg/dennis/js_scratch
+Website: http://www.wpvs.de/repo/js.scratch/
+Source code: https://github.com/DennisSchulmeister/js.scratch
