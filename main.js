@@ -589,7 +589,7 @@ interpreter = {
         code = code.replace(/\n/g, "\\n");
 
         var code1 = "try {"
-                  + '    __result = eval("' + code + '")'
+                  + '    __result = eval("' + code + '");'
                   + "} catch (error) {"
                   + "    __result = error;"
                   + "}"
